@@ -4,20 +4,16 @@ import pandas as pd
 import numpy as np
 from typing import List, Dict
 
-# Загрузка модели для создания эмбеддингов
 model = SentenceTransformer('all-MiniLM-L6-v2')
 print("Модель для эмбеддингов загружена")
 
-# Создание клиента ChromaDB (в памяти)
 client = chromadb.Client()
-# Создание коллекции
 collection = client.create_collection(
     name="documents_collection",
     metadata={"hnsw:space": "cosine"}  # Использование косинусного расстояния
 )
 print("Коллекция создана")
 
-# Примеры документов для базы знаний
 documents = [
 "Машинное обучение - это область искусственного интеллекта",
 "Глубокое обучение использует нейронные сети с множеством слоев",
@@ -30,15 +26,12 @@ documents = [
 "Neural networks inspired биологическими нейронными сетями",
 "Natural Language Processing обрабатывает человеческий язык"
 ]
-# Создание метаданных и идентификаторов
 metadata = [{"category": "AI", "source": "educational"} for _ in
 range(len(documents))]
 ids = [f"doc_{i}" for i in range(len(documents))]
 print(f"Подготовлено {len(documents)} документов")
 
-# Генерация эмбеддингов для документов
 embeddings = model.encode(documents).tolist()
-# Добавление документов в коллекцию
 collection.add(
     documents=documents,
     embeddings=embeddings,
@@ -48,9 +41,7 @@ collection.add(
 print("Документы добавлены в коллекцию")
 
 def semantic_search(query: str, n_results: int = 3):
-    # Генерация эмбеддинга для запроса
     query_embedding = model.encode([query]).tolist()
-    # Поиск похожих документов
     results = collection.query(
         query_embeddings=query_embedding,
         n_results=n_results,
@@ -58,7 +49,6 @@ def semantic_search(query: str, n_results: int = 3):
     )
     return results
 
-# Тестовые запросы
 test_queries = [
 "искусственный интеллект",
 "нейронные сети",
@@ -73,7 +63,6 @@ for query in test_queries:
     results['distances'][0])):
         print(f"{i+1}. {doc} (расстояние: {distance:.4f})")
 
-# ИСПРАВЛЕНИЕ: Функция начинается без отступа
 def filtered_search(query: str, filter_dict: Dict, n_results: int = 2):
     query_embedding = model.encode([query]).tolist()
     results = collection.query(
@@ -83,8 +72,7 @@ def filtered_search(query: str, filter_dict: Dict, n_results: int = 2):
         include=["documents", "distances", "metadatas"]
     )
     return results
-
-# Поиск с фильтрацией
+    
 print("\n\nПоиск с фильтрацией по категории:")
 results = filtered_search(
     "модели машинного обучения",
@@ -95,23 +83,18 @@ for i, (doc, distance) in enumerate(zip(results['documents'][0],
 results['distances'][0])):
     print(f"{i+1}. {doc} (расстояние: {distance:.4f})")
 
-# Получение информации о коллекции
 print(f"\nИнформация о коллекции:")
 print(f"Количество документов: {collection.count()}")
-# Получение нескольких документов
 sample_docs = collection.get(ids=["doc_0", "doc_1"])
 print("\nПримеры документов:")
 for doc in sample_docs['documents']:
     print(f"- {doc}")
 
-# Создание персистентного клиента
 persistent_client = chromadb.PersistentClient(path="./chroma_db")
-# Создание персистентной коллекции
 persistent_collection = persistent_client.create_collection(
     name="persistent_docs",
     metadata={"hnsw:space": "cosine"}
 )
-# Добавление документов в персистентную коллекцию
 persistent_collection.add(
     documents=documents[:5],  # Первые 5 документов
     embeddings=embeddings[:5],
@@ -119,13 +102,10 @@ persistent_collection.add(
     ids=ids[:5]
 )
 print("Персистентная коллекция создана и заполнена")
-# Проверка загрузки
 loaded_collection = persistent_client.get_collection("persistent_docs")
 print(f"Загружено документов: {loaded_collection.count()}")
 
-# ИСПРАВЛЕНИЕ: Функция начинается без отступа
 def create_news_collection():
-    # Пример данных (в реальности можно загрузить из файла)
     news_data = [
 "Рынок акций вырос на 2% сегодня",
 "Новая технология в области искусственного интеллекта представлена",
@@ -151,7 +131,6 @@ def create_news_collection():
     )
     return news_collection
 
-# Тестирование новостной коллекции
 news_coll = create_news_collection()
 results = news_coll.query(
     query_embeddings=model.encode(["финансовые новости"]).tolist(),
