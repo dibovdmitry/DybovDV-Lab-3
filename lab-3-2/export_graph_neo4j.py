@@ -2,12 +2,8 @@ from neo4j import GraphDatabase
 import pandas as pd 
 from typing import Dict 
 
-# ======================================================================
-# НАСТРОЙКИ ПОДКЛЮЧЕНИЯ
-# ======================================================================
 
 URI = "bolt://localhost:7687" 
-# ВНИМАНИЕ: Замените "password123" на актуальный пароль вашего контейнера Neo4j
 AUTH = ("neo4j", "password123") 
 driver = GraphDatabase.driver(URI, auth=AUTH)
 
@@ -18,9 +14,6 @@ def test_connection():
 
 print(test_connection())
 
-# ----------------------------------------------------------------------
-# 1. Создание графа знаний
-# ----------------------------------------------------------------------
 
 def create_knowledge_graph(tx): 
     # Очистка базы данных 
@@ -57,9 +50,6 @@ with driver.session() as session:
     session.execute_write(create_knowledge_graph) 
     print("База знаний создана")
 
-# ----------------------------------------------------------------------
-# 2. Функции для чтения и анализа графа
-# ----------------------------------------------------------------------
 
 def get_all_nodes(tx): 
     result = tx.run("MATCH (n) RETURN n.name AS name, labels(n) AS labels") 
@@ -124,9 +114,6 @@ with driver.session() as session:
 for node in connectivity: 
     print(f"{node['node']} ({node['type']}): {node['degree']} связей")
 
-# ----------------------------------------------------------------------
-# 3. Импорт данных из CSV и создание связей
-# ----------------------------------------------------------------------
 
 def import_ai_researchers(tx): 
     query = """ 
@@ -139,8 +126,8 @@ def import_ai_researchers(tx):
     }) 
     """ 
     tx.run(query) 
-    
-# Создание CSV файла для импорта
+
+
 researchers_data = """name,affiliation,field,h_index 
 Yann LeCun,Facebook AI Research,Computer Vision,180 
 Andrew Ng,Stanford University,Machine Learning,150 
@@ -157,7 +144,6 @@ with driver.session() as session:
 
 
 def connect_researchers_to_domains(tx): 
-    # ИСПРАВЛЕНИЕ: Добавлены WITH 1 для разделения операторов CREATE и MATCH
     query = """ 
     // 1. Связать всех исследователей с доменом AI
     MATCH (r:Researcher), (d:Domain {name: 'Artificial Intelligence'}) 
@@ -181,11 +167,7 @@ with driver.session() as session:
     session.execute_write(connect_researchers_to_domains) 
     print("Связи исследователей созданы")
 
-# ----------------------------------------------------------------------
-# 4. Экспорт данных и закрытие соединения
-# ----------------------------------------------------------------------
 
-# Функция для экспорта данных (используем tx)
 def export_graph_data_tx(tx): 
     query = """ 
     MATCH (n) 
@@ -199,11 +181,9 @@ def export_graph_data_tx(tx):
     return df 
 
 print("\nЭкспортированные данные:")
-# Вызов функции через execute_read
 with driver.session() as session:
     graph_data = session.execute_read(export_graph_data_tx)
 print(graph_data.head())
 
-# Закрытие драйвера
 driver.close() 
 print("Соединение с Neo4j закрыто")
