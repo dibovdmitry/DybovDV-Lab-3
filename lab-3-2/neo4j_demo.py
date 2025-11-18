@@ -2,24 +2,17 @@ from neo4j import GraphDatabase
 import pandas as pd 
 from typing import Dict 
 
-# Настройки подключения 
 URI = "bolt://localhost:7687" 
-# Вставьте здесь правильный пароль, который вы использовали при запуске Docker
 AUTH = ("neo4j", "password123") 
-# Создание драйвера 
 driver = GraphDatabase.driver(URI, auth=AUTH)
 
 def test_connection(): 
-    # Проверка соединения
     with driver.session() as session: 
         result = session.run("RETURN 'Connected to Neo4j' AS message") 
         return result.single()["message"] 
 
 print(test_connection())
 
-# ----------------------------------------------------------------------
-# 1. Создание графа знаний
-# ----------------------------------------------------------------------
 
 def create_knowledge_graph(tx): 
     # Очистка базы данных 
@@ -56,9 +49,6 @@ with driver.session() as session:
     session.execute_write(create_knowledge_graph) 
     print("База знаний создана")
 
-# ----------------------------------------------------------------------
-# 2. Функции для чтения и анализа графа
-# ----------------------------------------------------------------------
 
 def get_all_nodes(tx): 
     result = tx.run("MATCH (n) RETURN n.name AS name, labels(n) AS labels") 
@@ -105,7 +95,6 @@ for path in paths:
 
 
 def analyze_connectivity(tx): 
-    # ИСПРАВЛЕНИЕ: Заменен устаревший size((n)--()) на современный COUNT { (n)--() }
     query = """ 
     MATCH (n) 
     RETURN n.name AS node,  
@@ -123,12 +112,8 @@ with driver.session() as session:
 for node in connectivity: 
     print(f"{node['node']} ({node['type']}): {node['degree']} связей")
 
-# ----------------------------------------------------------------------
-# 3. Импорт данных из CSV
-# ----------------------------------------------------------------------
 
 def import_ai_researchers(tx): 
-    # Создание узлов исследователей 
     query = """ 
     LOAD CSV WITH HEADERS FROM 'file:///ai_researchers.csv' AS row 
     CREATE (:Researcher { 
@@ -140,7 +125,6 @@ def import_ai_researchers(tx):
     """ 
     tx.run(query) 
     
-# Создание CSV файла для импорта
 researchers_data = """name,affiliation,field,h_index 
 Yann LeCun,Facebook AI Research,Computer Vision,180 
 Andrew Ng,Stanford University,Machine Learning,150 
@@ -148,7 +132,6 @@ Yoshua Bengio,MILA,Deep Learning,170
 Geoffrey Hinton,University of Toronto,Neural Networks,200 
 Demis Hassabis,Google DeepMind,Reinforcement Learning,80 
 """ 
-# Файл записывается в директорию, монтированную к контейнеру Neo4j
 with open("neo4j/import/ai_researchers.csv", "w") as f: 
     f.write(researchers_data)
 
@@ -158,7 +141,6 @@ with driver.session() as session:
 
 
 def connect_researchers_to_domains(tx): 
-    # ИСПРАВЛЕНИЕ: Добавлены WITH 1 для разделения операторов CREATE и MATCH
     query = """ 
     // 1. Связать всех исследователей с доменом AI
     MATCH (r:Researcher), (d:Domain {name: 'Artificial Intelligence'}) 
